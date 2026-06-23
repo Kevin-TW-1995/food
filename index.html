@@ -1,0 +1,1309 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>公司訂餐系統</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@500;700;900&family=Noto+Sans+TC:wght@400;500;700&family=Roboto+Mono:wght@400;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+:root{
+  --paper:#FBF7EF;
+  --card:#FFFFFF;
+  --ink:#2B2420;
+  --ink-soft:#6B5F54;
+  --line:#E6DDD0;
+  --stamp:#C0392B;
+  --stamp-dark:#9C2E20;
+  --green:#3F7A5E;
+  --red-bg:#FBEAE8;
+  --shadow:0 2px 10px rgba(43,36,32,0.06), 0 1px 2px rgba(43,36,32,0.08);
+  --radius:14px;
+}
+*{ box-sizing:border-box; }
+html,body{ margin:0; padding:0; }
+body{
+  background:var(--paper);
+  color:var(--ink);
+  font-family:'Noto Sans TC', system-ui, -apple-system, sans-serif;
+  line-height:1.6;
+  -webkit-font-smoothing:antialiased;
+}
+#app{ max-width:880px; margin:0 auto; padding:20px 16px 60px; }
+
+h1,h2,h3{ font-family:'Noto Serif TC', serif; margin:0 0 12px; color:var(--ink); }
+h1{ font-size:21px; font-weight:900; letter-spacing:.5px; }
+h2{ font-size:18px; font-weight:700; border-bottom:1px dashed var(--line); padding-bottom:10px; margin-bottom:16px; }
+h3{ font-size:15px; font-weight:700; margin-top:24px; color:var(--ink-soft); }
+
+.chit{ background:var(--card); border:1px solid var(--line); border-radius:var(--radius); padding:18px 20px; box-shadow:var(--shadow); margin-bottom:14px; }
+.chit-top{ display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; }
+.chit-meta{ margin-top:12px; display:grid; gap:6px; }
+.meta-row{ display:flex; gap:10px; font-size:13px; }
+.meta-label{ color:var(--ink-soft); min-width:70px; flex-shrink:0; }
+.meta-value{ font-weight:600; }
+
+.stamp{ display:inline-block; border:1.5px solid var(--stamp); color:var(--stamp); border-radius:999px; padding:3px 12px; font-size:12px; font-weight:700; font-family:'Noto Serif TC',serif; letter-spacing:.5px; transform:rotate(-3deg); white-space:nowrap; }
+.stamp-green{ border-color:var(--green); color:var(--green); }
+.stamp-muted{ border-color:var(--ink-soft); color:var(--ink-soft); }
+.stamp-red{ border-color:var(--stamp-dark); color:var(--stamp-dark); }
+
+.tabs{ display:flex; gap:6px; margin-bottom:14px; }
+.tab-btn{ flex:1; padding:11px 6px; border:1px solid var(--line); background:#F2ECE0; color:var(--ink-soft); border-radius:10px 10px 0 0; font-family:'Noto Sans TC',sans-serif; font-weight:600; font-size:14px; cursor:pointer; transition:background .15s, color .15s; }
+.tab-btn.active{ background:var(--card); color:var(--stamp); box-shadow:0 -2px 6px rgba(43,36,32,0.04); }
+.tab-btn:hover{ color:var(--ink); }
+.tab-btn:focus-visible{ outline:2px solid var(--stamp); outline-offset:2px; }
+
+.panel{ display:none; }
+.panel.active{ display:block; }
+
+.card{ background:var(--card); border:1px solid var(--line); border-radius:var(--radius); padding:20px; box-shadow:var(--shadow); margin-bottom:16px; }
+.card-head-row{ display:flex; align-items:center; justify-content:space-between; gap:10px; }
+
+.field{ display:block; margin-bottom:14px; }
+.field span{ display:block; font-size:13px; color:var(--ink-soft); margin-bottom:5px; font-weight:600; }
+input[type=text], input[type=number], input[type=password], input[type=datetime-local], textarea, select{
+  width:100%; padding:10px 12px; border:1px solid var(--line); border-radius:8px; font-size:15px; font-family:inherit; color:var(--ink); background:#FFFDFA;
+}
+input:focus-visible, textarea:focus-visible, select:focus-visible{ outline:2px solid var(--stamp); outline-offset:1px; border-color:var(--stamp); }
+textarea{ resize:vertical; width:100%; }
+
+.btn{ display:inline-flex; align-items:center; justify-content:center; gap:6px; padding:10px 18px; border-radius:9px; border:1.5px solid transparent; font-size:14px; font-weight:700; cursor:pointer; font-family:'Noto Sans TC',sans-serif; transition:transform .08s, opacity .15s, background .15s; }
+.btn:active{ transform:scale(.97); }
+.btn:disabled{ opacity:.55; cursor:not-allowed; }
+.btn-primary{ background:var(--stamp); color:#fff; }
+.btn-primary:hover{ background:var(--stamp-dark); }
+.btn-secondary{ background:#F2ECE0; color:var(--ink); border-color:var(--line); }
+.btn-secondary:hover{ background:#E9E1D2; }
+.btn-ghost{ background:transparent; color:var(--stamp); border-color:var(--stamp); }
+.btn-ghost:hover{ background:var(--red-bg); }
+.btn-danger{ background:transparent; color:var(--stamp-dark); border-color:var(--stamp-dark); }
+.btn-danger:hover{ background:var(--red-bg); }
+.btn-block{ width:100%; margin-top:14px; }
+.btn-text-danger{ background:none; border:none; color:var(--stamp-dark); font-size:12px; font-weight:700; cursor:pointer; text-decoration:underline; padding:2px 4px; }
+.btn-sm{ padding:6px 12px; font-size:12px; }
+
+.order-rows{ display:flex; flex-direction:column; gap:14px; margin-bottom:14px; }
+.order-row{ border:1px dashed var(--line); border-radius:10px; padding:14px; background:#FFFDFA; }
+.row-head{ display:flex; gap:8px; align-items:center; margin-bottom:10px; }
+.row-head select{ flex:1; }
+.row-remove{ flex-shrink:0; width:30px; height:30px; border-radius:50%; border:1px solid var(--line); background:#fff; color:var(--ink-soft); cursor:pointer; font-size:14px; }
+.row-remove:hover{ background:var(--red-bg); color:var(--stamp-dark); border-color:var(--stamp-dark); }
+.row-grid{ display:grid; grid-template-columns:1.4fr 1fr .8fr .7fr; gap:8px; }
+.row-grid label, .note-field{ display:block; }
+.row-grid label span, .note-field span{ display:block; font-size:11px; color:var(--ink-soft); margin-bottom:3px; }
+.note-field{ margin-top:8px; }
+.row-subtotal{ margin-top:10px; text-align:right; font-size:13px; color:var(--ink-soft); }
+.amount{ font-family:'Roboto Mono', monospace; font-weight:700; color:var(--ink); }
+
+.order-total-bar{ display:flex; justify-content:space-between; align-items:center; padding:12px 4px; border-top:1px dashed var(--line); font-size:15px; font-weight:700; }
+.order-total-bar .amount{ font-size:20px; color:var(--stamp); }
+
+.hint{ font-size:13px; color:var(--ink-soft); margin:6px 0 14px; }
+.hint a{ color:var(--stamp); }
+.hint code{ background:#F2ECE0; padding:1px 6px; border-radius:4px; font-family:'Roboto Mono',monospace; color:var(--ink); }
+
+details{ border:1px dashed var(--line); border-radius:8px; padding:10px 14px; margin-bottom:14px; background:#FFFDFA; }
+details summary{ cursor:pointer; font-weight:700; font-size:13px; color:var(--stamp); }
+details[open] summary{ margin-bottom:8px; }
+details ol, details ul{ padding-left:20px; font-size:13px; color:var(--ink-soft); margin:6px 0; }
+
+.menu-upload-row{ display:flex; align-items:center; gap:10px; margin-bottom:10px; flex-wrap:wrap; }
+.file-name{ font-size:12px; color:var(--ink-soft); }
+.menu-preview{ max-width:100%; max-height:240px; border-radius:8px; border:1px solid var(--line); margin-bottom:10px; display:block; }
+#menuParseStatus{ font-size:13px; color:var(--ink-soft); margin-bottom:10px; min-height:18px; }
+
+.parsed-list{ display:flex; flex-direction:column; gap:6px; margin-bottom:10px; }
+.parsed-row{ display:grid; grid-template-columns:24px 2fr 1fr 80px; gap:6px; align-items:center; }
+.parsed-row input[type=checkbox]{ width:18px; height:18px; }
+
+.menu-list{ display:flex; flex-direction:column; gap:6px; margin-bottom:14px; }
+.menu-item-row{ display:flex; align-items:center; gap:10px; padding:8px 10px; border:1px solid var(--line); border-radius:8px; font-size:14px; background:#FFFDFA; }
+.menu-item-name{ flex:1; font-weight:600; }
+.menu-item-cat{ color:var(--ink-soft); font-size:12px; padding:2px 8px; background:#F2ECE0; border-radius:999px; }
+.menu-item-price{ font-family:'Roboto Mono',monospace; font-weight:700; }
+
+.manual-add-row{ display:grid; grid-template-columns:2fr 1fr 1fr auto; gap:8px; align-items:center; }
+
+.stats-summary{ display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-bottom:18px; }
+.stat-box{ text-align:center; padding:14px 8px; border:1px dashed var(--line); border-radius:10px; background:#FFFDFA; }
+.stat-num{ display:block; font-family:'Roboto Mono',monospace; font-size:22px; font-weight:700; color:var(--stamp); }
+.stat-label{ font-size:12px; color:var(--ink-soft); }
+
+.data-table{ width:100%; border-collapse:collapse; font-size:13px; margin-bottom:6px; }
+.data-table th, .data-table td{ padding:8px 10px; border-bottom:1px solid var(--line); text-align:left; }
+.data-table th{ color:var(--ink-soft); font-weight:700; font-size:12px; }
+.data-table td.num, .data-table th.num{ text-align:right; font-family:'Roboto Mono',monospace; }
+.sub-table{ margin-top:8px; margin-bottom:0; font-size:12px; }
+.empty-row{ color:var(--ink-soft); text-align:center; padding:18px 0; font-size:13px; }
+
+.order-detail-group{ border:1px solid var(--line); border-radius:10px; padding:12px 14px; margin-bottom:10px; background:#FFFDFA; }
+.order-detail-head{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:6px; font-size:13px; }
+.order-detail-head span:nth-child(2){ color:var(--ink-soft); }
+
+.admin-actions{ display:flex; gap:10px; margin-top:16px; flex-wrap:wrap; }
+
+.my-order-item{ border:1px dashed var(--line); border-radius:8px; padding:10px 14px; margin-bottom:10px; }
+.my-order-head{ display:flex; justify-content:space-between; align-items:center; font-size:13px; margin-bottom:6px; gap:8px; }
+.my-order-list{ margin:0; padding-left:18px; font-size:13px; color:var(--ink-soft); }
+
+#toast-container{ position:fixed; bottom:20px; left:50%; transform:translateX(-50%); display:flex; flex-direction:column; gap:8px; z-index:999; width:90%; max-width:400px; align-items:center; }
+.toast{ background:var(--ink); color:#fff; padding:12px 18px; border-radius:8px; font-size:14px; opacity:0; transform:translateY(10px); transition:opacity .25s, transform .25s; box-shadow:var(--shadow); text-align:center; }
+.toast.show{ opacity:1; transform:translateY(0); }
+.toast-success{ background:var(--green); }
+.toast-error{ background:var(--stamp-dark); }
+
+@media (max-width:600px){
+  .row-grid{ grid-template-columns:1fr 1fr; }
+  .stats-summary{ grid-template-columns:1fr; }
+  .manual-add-row{ grid-template-columns:1fr; }
+  .parsed-row{ grid-template-columns:20px 1.4fr 1fr 60px; font-size:13px; }
+}
+@media (prefers-reduced-motion: reduce){
+  *{ transition:none !important; animation:none !important; }
+}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <header class="chit">
+    <div class="chit-top">
+      <h1 id="appTitle">🍱 公司訂餐系統</h1>
+      <span id="syncBadge" class="stamp stamp-muted">檢查中...</span>
+    </div>
+    <div class="chit-meta">
+      <div class="meta-row"><span class="meta-label">本次訂購</span><span id="metaEventTitle" class="meta-value">尚未設定</span></div>
+      <div class="meta-row"><span class="meta-label">合作店家</span><span id="metaRestaurant" class="meta-value">—</span></div>
+      <div class="meta-row"><span class="meta-label">截止時間</span><span id="metaDeadline" class="meta-value">—</span></div>
+    </div>
+  </header>
+
+  <nav class="tabs" role="tablist">
+    <button class="tab-btn active" data-action="switch-tab" data-tab="order">📝 我要點餐</button>
+    <button class="tab-btn" data-action="switch-tab" data-tab="admin">📊 管理後台</button>
+    <button class="tab-btn" data-action="switch-tab" data-tab="settings">⚙️ 設定</button>
+  </nav>
+
+  <main>
+    <!-- ===================== 點餐頁 ===================== -->
+    <section id="panel-order" class="panel active">
+      <div class="card">
+        <h2>填寫訂單</h2>
+        <label class="field">
+          <span>姓名 <em>*</em></span>
+          <input type="text" id="orderName" placeholder="請輸入你的姓名">
+        </label>
+        <label class="field">
+          <span>單位課室 <em>*</em></span>
+          <select id="orderDept">
+            <option value="">請選擇</option>
+            <option value="新竹所">新竹所</option>
+            <option value="物料課">物料課</option>
+            <option value="發包中心">發包中心</option>
+            <option value="（副）處長室">（副）處長室</option>
+            <option value="人事室">人事室</option>
+            <option value="會計室">會計室</option>
+            <option value="業務課">業務課</option>
+            <option value="工務課">工務課</option>
+            <option value="出納">出納</option>
+            <option value="總務">總務</option>
+            <option value="操作課">操作課</option>
+            <option value="其他">其他</option>
+          </select>
+        </label>
+
+        <div id="orderRows" class="order-rows"></div>
+        <datalist id="categoryOptions"></datalist>
+
+        <button class="btn btn-ghost" data-action="add-row" type="button">＋ 新增一項餐點</button>
+
+        <div class="order-total-bar">
+          <span>合計</span>
+          <span id="orderGrandTotal" class="amount">$0</span>
+        </div>
+
+        <button class="btn btn-primary btn-block" data-action="submit-order" type="button">送出訂單</button>
+      </div>
+
+      <div class="card" id="myOrdersCard" style="display:none;">
+        <h2>我送出的訂單</h2>
+        <div id="myOrdersList"></div>
+      </div>
+    </section>
+
+    <!-- ===================== 管理後台 ===================== -->
+    <section id="panel-admin" class="panel">
+      <div class="card">
+        <h2>本次訂購資訊</h2>
+        <label class="field"><span>標題</span><input type="text" id="metaEventTitleInput" placeholder="例如：6/22 週三午餐"></label>
+        <label class="field"><span>合作店家</span><input type="text" id="metaRestaurantInput" placeholder="例如：鬍鬚張魯肉飯"></label>
+        <label class="field"><span>截止時間</span><input type="datetime-local" id="metaDeadlineInput"></label>
+        <button class="btn btn-primary" data-action="save-meta" type="button">儲存設定</button>
+      </div>
+
+      <div class="card">
+        <h2>餐廳菜單管理</h2>
+        <p class="hint">上傳菜單照片，AI 會自動幫你整理成品項清單，大家點餐時就能直接從清單挑選，不用每次手打。同一餐點有大份/小份等不同價格時，會自動拆成兩筆（例如「牛肉麵(大碗)」「牛肉麵(小碗)」）。（AI 辨識只會帶入品名與金額，種類留空白讓點餐的人自己填）</p>
+
+        <div class="menu-upload-row">
+          <input type="file" id="menuFileInput" accept="image/*" style="display:none">
+          <button class="btn btn-secondary" data-action="trigger-menu-upload" type="button">📷 上傳菜單照片</button>
+          <span id="menuFileName" class="file-name"></span>
+        </div>
+        <img id="menuPreview" class="menu-preview" style="display:none" alt="菜單預覽">
+        <button class="btn btn-primary" id="parseMenuBtn" data-action="parse-menu-ai" type="button" style="display:none">🪄 AI 自動辨識品項</button>
+        <div id="menuParseStatus"></div>
+        <div id="parsedMenuPreview"></div>
+
+        <div class="menu-upload-row">
+          <input type="file" id="menuExcelInput" accept=".xlsx,.xls" style="display:none">
+          <button class="btn btn-secondary" data-action="trigger-menu-excel" type="button">📊 匯入 Excel 菜單</button>
+        </div>
+        <p class="hint" style="margin-top:-6px;">Excel 格式：A欄＝品名、B欄＝種類、C欄＝金額（有沒有標題列都可以，會自動判斷略過）</p>
+
+        <details>
+          <summary>或手動貼上文字清單</summary>
+          <p class="hint" style="margin-top:6px;">格式：每行一項，用逗號分隔「品名,種類,金額」，例如：<br>雞腿便當,主食,90<br>紅茶,飲料,20</p>
+          <textarea id="menuPasteArea" rows="4" placeholder="雞腿便當,主食,90&#10;紅茶,飲料,20"></textarea>
+          <button class="btn btn-secondary" data-action="parse-pasted-menu" type="button" style="margin-top:8px;">解析並加入清單</button>
+        </details>
+
+        <div class="card-head-row">
+          <h3 style="margin-bottom:0;">目前菜單品項（<span id="menuCount">0</span>）</h3>
+          <button class="btn btn-danger btn-sm" data-action="clear-all-menu" type="button">🗑 一鍵刪除全部</button>
+        </div>
+        <div id="menuList" class="menu-list"></div>
+        <div class="manual-add-row">
+          <input type="text" id="manualItemName" placeholder="品名">
+          <input type="text" id="manualItemCategory" placeholder="種類">
+          <input type="number" id="manualItemPrice" placeholder="金額">
+          <button class="btn btn-ghost" data-action="add-manual-menu-item" type="button">＋ 新增</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head-row">
+          <h2 style="margin-bottom:0;border-bottom:none;padding-bottom:0;">訂單統計與明細</h2>
+          <button class="btn btn-secondary btn-sm" data-action="manual-refresh" type="button">🔄 重新整理</button>
+        </div>
+
+        <div class="stats-summary">
+          <div class="stat-box"><span class="stat-num" id="statTotalOrders">0</span><span class="stat-label">筆訂單</span></div>
+          <div class="stat-box"><span class="stat-num" id="statTotalQty">0</span><span class="stat-label">總件數</span></div>
+          <div class="stat-box"><span class="stat-num" id="statTotalAmount">$0</span><span class="stat-label">總金額</span></div>
+        </div>
+
+        <h3>📦 餐點統計（給店家下單用）</h3>
+        <p class="hint" style="margin-top:-8px;">相同餐點但備註不同（例如半糖、半飯）會分開列出，方便正確下單。</p>
+        <table class="data-table" id="itemStatsTable">
+          <thead><tr><th>餐點名稱</th><th>種類</th><th>備註</th><th class="num">單價</th><th class="num">數量</th><th class="num">金額</th></tr></thead>
+          <tbody></tbody>
+        </table>
+
+        <h3>💰 個人應付金額（收錢用）</h3>
+        <table class="data-table" id="personStatsTable">
+          <thead><tr><th>課室</th><th>姓名</th><th class="num">件數</th><th class="num">應付金額</th></tr></thead>
+          <tbody></tbody>
+        </table>
+
+        <h3>📋 訂單明細</h3>
+        <div id="orderDetailList"></div>
+
+        <div class="admin-actions">
+          <button class="btn btn-primary" data-action="export-excel" type="button">⬇️ 下載 Excel</button>
+          <button class="btn btn-danger" data-action="clear-all-orders" type="button">🗑 清空訂單（開新一輪）</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== 設定頁 ===================== -->
+    <section id="panel-settings" class="panel">
+      <div class="card">
+        <h2>多裝置同步（Firebase）</h2>
+        <p class="hint">若要讓「多台手機 / 電腦」之間即時同步訂單資料，請設定 Firebase 即時資料庫網址。若不設定，本系統只會在「這台裝置、這個瀏覽器」內運作，適合單機示範或一台平板輪流填寫的情境。</p>
+        <details>
+          <summary>如何取得 Firebase 網址？</summary>
+          <ol>
+            <li>前往 <a href="https://console.firebase.google.com" target="_blank" rel="noopener">Firebase Console</a> 建立新專案（免費）</li>
+            <li>左側選單選擇「Realtime Database」→ 建立資料庫 → 選擇「測試模式」</li>
+            <li>複製畫面上顯示的資料庫網址（類似 https://xxx-default-rtdb.asia-southeast1.firebasedatabase.app）</li>
+            <li>貼到下方欄位並儲存，所有用這個網址的人都會同步同一份訂單資料</li>
+          </ol>
+        </details>
+        <label class="field"><span>Realtime Database 網址</span><input type="text" id="firebaseUrlInput" placeholder="https://xxx-default-rtdb.xxx.firebasedatabase.app"></label>
+        <button class="btn btn-primary" data-action="save-settings" type="button">儲存設定</button>
+      </div>
+
+      <div class="card">
+        <h2>AI 菜單辨識（Gemini）</h2>
+        <p class="hint">用於「上傳菜單照片 → 自動辨識品項」功能，請至 <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">Google AI Studio</a> 免費取得金鑰。不設定也能用「手動貼上文字清單」匯入菜單。</p>
+        <label class="field"><span>Gemini API Key</span><input type="password" id="geminiKeyInput" placeholder="AIza..."></label>
+        <label class="field"><span>模型名稱</span><input type="text" id="geminiModelInput" placeholder="gemini-2.5-flash"></label>
+        <button class="btn btn-primary" data-action="save-settings" type="button">儲存設定</button>
+      </div>
+
+      <div class="card">
+        <h2>管理密碼（簡易防呆）</h2>
+        <p class="hint">設定後，進入「管理後台」與「設定」頁籤需輸入密碼。僅為基本防呆，不是正式資安機制，請勿用於機密用途。</p>
+        <p class="hint">⚠️ 提醒：把這個檔案（或它的網址）給同事時，他們打開只會看到點餐畫面，看不到「管理後台」「設定」。你自己這支裝置是用「連點標題 5 下」解鎖的，解鎖狀態已記在這支裝置上，下次打開不用再點。<strong>建議現在就設定一個管理密碼</strong>，這樣即使有人也學你連點標題，沒密碼還是進不去。</p>
+        <label class="field"><span>密碼</span><input type="password" id="adminPasswordInput" placeholder="留空＝不設密碼"></label>
+        <button class="btn btn-primary" data-action="save-settings" type="button">儲存設定</button>
+        <button class="btn btn-secondary btn-sm" data-action="exit-admin-mode" type="button" style="margin-top:10px;">退出管理模式（這支裝置恢復成一般點餐畫面）</button>
+      </div>
+
+      <div class="card">
+        <h2>資料備份</h2>
+        <p class="hint">建議每次清空訂單前先匯出備份，以防需要回頭查對。</p>
+        <div class="admin-actions">
+          <button class="btn btn-secondary" data-action="export-backup" type="button">⬇️ 匯出備份 JSON</button>
+          <input type="file" id="importBackupInput" accept="application/json" style="display:none">
+          <button class="btn btn-secondary" data-action="trigger-import-backup" type="button">⬆️ 匯入備份</button>
+          <button class="btn btn-danger" data-action="clear-local-data" type="button">清空本機資料</button>
+        </div>
+      </div>
+
+      <p class="hint" style="text-align:center; opacity:.6;">公司訂餐系統 · v1.5（大小份AI辨識、Excel總計公式）</p>
+    </section>
+  </main>
+
+  <div id="toast-container"></div>
+</div>
+
+<script>
+/* ===================== 安全儲存包裝（必須放在最前面，其他程式碼一開始就會用到） ===================== */
+/* 有些瀏覽器以 content:// 或某些特殊方式開啟本機檔案時，可能會封鎖 localStorage / sessionStorage。
+   這裡做一層防護：存取失敗就自動改用記憶體暫存，至少能讓畫面在「這次開啟期間」正常運作，
+   不會整個壞掉，只是關閉後暫存的資料不會留著。 */
+const memLocal = {};
+const memSession = {};
+function lsGet(key){ try{ return localStorage.getItem(key); }catch(e){ return (key in memLocal) ? memLocal[key] : null; } }
+function lsSet(key, val){ try{ localStorage.setItem(key, val); }catch(e){ memLocal[key] = val; } }
+function lsRemove(key){ try{ localStorage.removeItem(key); }catch(e){ delete memLocal[key]; } }
+function ssGet(key){ try{ return sessionStorage.getItem(key); }catch(e){ return (key in memSession) ? memSession[key] : null; } }
+function ssSet(key, val){ try{ sessionStorage.setItem(key, val); }catch(e){ memSession[key] = val; } }
+function ssRemove(key){ try{ sessionStorage.removeItem(key); }catch(e){ delete memSession[key]; } }
+
+/* ===================== 常數與狀態 ===================== */
+const LS_KEYS = { data:'cos_data_v1', settings:'cos_settings_v1', myOrders:'cos_my_orders_v1' };
+
+let state = { meta:{eventTitle:'', restaurantName:'', deadline:''}, menu:[], orders:[] };
+let settings = { firebaseUrl:'', geminiKey:'', geminiModel:'gemini-2.5-flash', adminPassword:'' };
+let orderRows = [];
+let parsedMenuStaging = [];
+let pendingMenuImageBase64 = null;
+let pendingMenuImageMime = null;
+let activeTab = 'order';
+let pollTimer = null;
+const bc = ('BroadcastChannel' in window) ? new BroadcastChannel('cos-sync') : null;
+function computeIsAdminMode(){
+  try { if (new URLSearchParams(window.location.search).get('admin') === '1') return true; }
+  catch(e){}
+  return lsGet('cos_device_admin') === '1';
+}
+let isAdminMode = computeIsAdminMode();
+
+const $ = sel => document.querySelector(sel);
+const $$ = sel => Array.from(document.querySelectorAll(sel));
+
+function genId(){ return 'id_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2,8); }
+function esc(s){ return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function numOrEmpty(v){ return (v===''||v===undefined||v===null) ? '' : v; }
+function formatDateTime(isoLike){
+  try{
+    const d = new Date(isoLike);
+    if (isNaN(d.getTime())) return isoLike || '';
+    return d.toLocaleString('zh-TW', {month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit'});
+  }catch(e){ return isoLike || ''; }
+}
+function newRow(){ return { id:genId(), menuId:'', itemName:'', category:'', price:'', qty:1, note:'' }; }
+
+/* ===================== 本機儲存 ===================== */
+function loadLocalData(){
+  try{
+    const raw = lsGet(LS_KEYS.data);
+    if (!raw) return { meta:{eventTitle:'',restaurantName:'',deadline:''}, menu:[], orders:[] };
+    const p = JSON.parse(raw);
+    return { meta:p.meta||{eventTitle:'',restaurantName:'',deadline:''}, menu:p.menu||[], orders:p.orders||[] };
+  }catch(e){ return { meta:{eventTitle:'',restaurantName:'',deadline:''}, menu:[], orders:[] }; }
+}
+function saveLocalData(data){ lsSet(LS_KEYS.data, JSON.stringify(data)); }
+function loadSettings(){
+  try{
+    const raw = lsGet(LS_KEYS.settings);
+    if (!raw) return { firebaseUrl:'', geminiKey:'', geminiModel:'gemini-2.5-flash', adminPassword:'' };
+    return Object.assign({ firebaseUrl:'', geminiKey:'', geminiModel:'gemini-2.5-flash', adminPassword:'' }, JSON.parse(raw));
+  }catch(e){ return { firebaseUrl:'', geminiKey:'', geminiModel:'gemini-2.5-flash', adminPassword:'' }; }
+}
+function saveSettingsToLS(){ lsSet(LS_KEYS.settings, JSON.stringify(settings)); }
+function loadMyOrderIds(){ try{ return JSON.parse(lsGet(LS_KEYS.myOrders)||'[]'); }catch(e){ return []; } }
+function addMyOrderId(id){ const ids=loadMyOrderIds(); ids.push(id); lsSet(LS_KEYS.myOrders, JSON.stringify(ids)); }
+function removeMyOrderId(id){ const ids=loadMyOrderIds().filter(x=>x!==id); lsSet(LS_KEYS.myOrders, JSON.stringify(ids)); }
+
+/* ===================== Firebase REST ===================== */
+function isFirebaseConfigured(){ return !!(settings.firebaseUrl && settings.firebaseUrl.trim()); }
+function fbBase(){ return settings.firebaseUrl.trim().replace(/\/$/, ''); }
+async function fbGet(path){
+  const res = await fetch(`${fbBase()}/${path}.json`);
+  if (!res.ok) throw new Error('讀取失敗 ('+res.status+')');
+  return res.json();
+}
+async function fbPut(path, value){
+  const res = await fetch(`${fbBase()}/${path}.json`, { method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(value) });
+  if (!res.ok) throw new Error('寫入失敗 ('+res.status+')');
+  return res.json();
+}
+async function fbPush(path, value){
+  const res = await fetch(`${fbBase()}/${path}.json`, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(value) });
+  if (!res.ok) throw new Error('新增失敗 ('+res.status+')');
+  return res.json();
+}
+async function fbDelete(path){
+  const res = await fetch(`${fbBase()}/${path}.json`, { method:'DELETE' });
+  if (!res.ok) throw new Error('刪除失敗 ('+res.status+')');
+  return res.json();
+}
+async function fetchRemoteState(){
+  const [menuRaw, ordersRaw, metaRaw] = await Promise.all([ fbGet('menu'), fbGet('orders'), fbGet('meta') ]);
+  const menu = menuRaw ? Object.entries(menuRaw).map(([id,v])=>({ id, name:v.name, category:v.category, price:v.price })) : [];
+  const orders = ordersRaw ? Object.entries(ordersRaw).map(([id,v])=>({ id, name:v.name, dept:v.dept||'', items:v.items||[], submittedAt:v.submittedAt })) : [];
+  const meta = metaRaw || { eventTitle:'', restaurantName:'', deadline:'' };
+  return { meta, menu, orders };
+}
+
+/* ===================== 資料存取（依設定自動切換 Firebase / 本機） ===================== */
+async function submitOrderData(name, dept, items){
+  const order = { name, dept, items, submittedAt: Date.now() };
+  if (isFirebaseConfigured()){
+    const res = await fbPush('orders', order);
+    return res.name;
+  }
+  const data = loadLocalData();
+  const id = genId();
+  data.orders.push({ ...order, id });
+  saveLocalData(data);
+  bc && bc.postMessage('refresh');
+  return id;
+}
+async function deleteOrderData(id){
+  if (isFirebaseConfigured()){ await fbDelete('orders/' + id); return; }
+  const data = loadLocalData();
+  data.orders = data.orders.filter(o=>o.id!==id);
+  saveLocalData(data);
+  bc && bc.postMessage('refresh');
+}
+async function saveMenuData(menuArr){
+  if (isFirebaseConfigured()){
+    const obj = {};
+    menuArr.forEach(m => { obj[m.id || genId()] = { name:m.name, category:m.category, price:m.price }; });
+    await fbPut('menu', obj);
+    return;
+  }
+  const data = loadLocalData();
+  data.menu = menuArr;
+  saveLocalData(data);
+  bc && bc.postMessage('refresh');
+}
+async function saveMetaData(meta){
+  if (isFirebaseConfigured()){ await fbPut('meta', meta); return; }
+  const data = loadLocalData();
+  data.meta = meta;
+  saveLocalData(data);
+  bc && bc.postMessage('refresh');
+}
+async function clearAllOrdersData(){
+  if (isFirebaseConfigured()){ await fbPut('orders', null); return; }
+  const data = loadLocalData();
+  data.orders = [];
+  saveLocalData(data);
+  bc && bc.postMessage('refresh');
+}
+
+/* ===================== 同步狀態與刷新 ===================== */
+function setSyncBadge(mode){
+  const el = $('#syncBadge');
+  if (!el) return;
+  if (mode==='online'){ el.textContent='🟢 即時同步中'; el.className='stamp stamp-green'; }
+  else if (mode==='local'){ el.textContent='⚪ 本機模式'; el.className='stamp stamp-muted'; }
+  else { el.textContent='🔴 同步失敗'; el.className='stamp stamp-red'; }
+}
+async function refreshState(full){
+  try{
+    if (isFirebaseConfigured()){
+      state = await fetchRemoteState();
+      setSyncBadge('online');
+    } else {
+      state = loadLocalData();
+      setSyncBadge('local');
+    }
+  }catch(e){
+    setSyncBadge('error');
+  }
+  if (full) renderAll(); else renderSoft();
+}
+function setupPolling(){
+  if (pollTimer) clearInterval(pollTimer);
+  if (isFirebaseConfigured()) pollTimer = setInterval(()=>refreshState(false), 8000);
+}
+window.addEventListener('focus', ()=>refreshState(false));
+if (bc) bc.onmessage = () => refreshState(false);
+
+/* ===================== 渲染 ===================== */
+function renderAll(){ renderHeader(); renderOrderTab(); renderAdminTab(); renderSettingsTab(); }
+function renderSoft(){ renderHeader(); renderAdminTab(); renderMyOrders(); renderCategoryDatalist(); }
+
+function renderHeader(){
+  $('#metaEventTitle').textContent = state.meta.eventTitle || '尚未設定';
+  $('#metaRestaurant').textContent = state.meta.restaurantName || '—';
+  $('#metaDeadline').textContent = state.meta.deadline ? formatDateTime(state.meta.deadline) : '—';
+}
+
+function renderOrderTab(){
+  renderCategoryDatalist();
+  renderOrderRows();
+  renderMyOrders();
+}
+function renderOrderRows(){
+  const container = $('#orderRows');
+  container.innerHTML = orderRows.map(row => renderRowHTML(row)).join('');
+  orderRows.forEach(row => updateRowSubtotal(row.id));
+  updateGrandTotal();
+}
+function renderRowHTML(row){
+  const menuOptions = state.menu.map(m => `<option value="${m.id}" ${row.menuId===m.id?'selected':''}>${esc(m.name)} - $${m.price}</option>`).join('');
+  return `
+  <div class="order-row" data-row-id="${row.id}">
+    <div class="row-head">
+      <select data-field="menuSelect" data-row-id="${row.id}">
+        <option value="">— 自行輸入 / 從菜單選擇 —</option>
+        ${menuOptions}
+      </select>
+      ${orderRows.length>1 ? `<button type="button" class="row-remove" data-action="remove-row" data-row-id="${row.id}" title="刪除此項">✕</button>` : ''}
+    </div>
+    <div class="row-grid">
+      <label><span>餐點名稱</span><input type="text" data-field="itemName" data-row-id="${row.id}" value="${esc(row.itemName)}" placeholder="例如：雞腿便當"></label>
+      <label><span>種類</span><input type="text" list="categoryOptions" data-field="category" data-row-id="${row.id}" value="${esc(row.category)}" placeholder="例如：主食"></label>
+      <label><span>單價</span><input type="number" min="0" step="1" data-field="price" data-row-id="${row.id}" value="${numOrEmpty(row.price)}" placeholder="0"></label>
+      <label><span>數量</span><input type="number" min="1" step="1" data-field="qty" data-row-id="${row.id}" value="${row.qty||1}"></label>
+    </div>
+    <label class="note-field"><span>備註</span><input type="text" data-field="note" data-row-id="${row.id}" value="${esc(row.note)}" placeholder="例如：不要香菜、加辣"></label>
+    <div class="row-subtotal">小計　<span class="amount" data-subtotal-for="${row.id}">$0</span></div>
+  </div>`;
+}
+function updateRowSubtotal(rowId){
+  const row = orderRows.find(r=>r.id===rowId);
+  if (!row) return;
+  const subtotal = (Number(row.price)||0) * (Number(row.qty)||0);
+  const el = document.querySelector(`[data-subtotal-for="${rowId}"]`);
+  if (el) el.textContent = '$' + subtotal.toLocaleString();
+}
+function updateGrandTotal(){
+  const total = orderRows.reduce((s,r)=> s + (Number(r.price)||0)*(Number(r.qty)||0), 0);
+  const el = $('#orderGrandTotal');
+  if (el) el.textContent = '$' + total.toLocaleString();
+}
+function addRow(){ orderRows.push(newRow()); renderOrderRows(); }
+function removeRow(rowId){
+  orderRows = orderRows.filter(r=>r.id!==rowId);
+  if (orderRows.length===0) orderRows.push(newRow());
+  renderOrderRows();
+}
+
+function renderMyOrders(){
+  const ids = loadMyOrderIds();
+  const card = $('#myOrdersCard');
+  const list = $('#myOrdersList');
+  const mine = state.orders.filter(o => ids.includes(o.id));
+  if (mine.length===0){ card.style.display='none'; return; }
+  card.style.display='';
+  list.innerHTML = mine.map(o => {
+    const total = (o.items||[]).reduce((s,it)=>s+it.price*it.qty,0);
+    return `<div class="my-order-item">
+      <div class="my-order-head">
+        <span>${formatDateTime(o.submittedAt)}　共 $${total.toLocaleString()}</span>
+        <button class="btn-text-danger" data-action="delete-my-order" data-order-id="${o.id}">刪除</button>
+      </div>
+      <ul class="my-order-list">
+        ${(o.items||[]).map(it=>`<li>${esc(it.itemName)} x${it.qty}　$${(it.price*it.qty).toLocaleString()}${it.note?`　備註：${esc(it.note)}`:''}</li>`).join('')}
+      </ul>
+    </div>`;
+  }).join('');
+}
+
+function renderCategoryDatalist(){
+  const dl = $('#categoryOptions');
+  if (!dl) return;
+  const cats = new Set();
+  state.menu.forEach(m => m.category && cats.add(m.category));
+  state.orders.forEach(o => (o.items||[]).forEach(it => it.category && cats.add(it.category)));
+  dl.innerHTML = Array.from(cats).map(c => `<option value="${esc(c)}">`).join('');
+}
+
+function renderAdminTab(){
+  $('#metaEventTitleInput').value = state.meta.eventTitle || '';
+  $('#metaRestaurantInput').value = state.meta.restaurantName || '';
+  $('#metaDeadlineInput').value = state.meta.deadline || '';
+
+  renderMenuList();
+
+  const lineItems = [];
+  state.orders.forEach(o => (o.items||[]).forEach(it => lineItems.push({ ...it, name:o.name, dept:o.dept||'', orderId:o.id, submittedAt:o.submittedAt })));
+
+  const totalQty = lineItems.reduce((s,li)=>s+(Number(li.qty)||0),0);
+  const totalAmount = lineItems.reduce((s,li)=>s+(Number(li.price)||0)*(Number(li.qty)||0),0);
+  $('#statTotalOrders').textContent = state.orders.length;
+  $('#statTotalQty').textContent = totalQty;
+  $('#statTotalAmount').textContent = '$' + totalAmount.toLocaleString();
+
+  const itemMap = new Map();
+  lineItems.forEach(li=>{
+    const noteKey = (li.note||'').trim();
+    const key = li.itemName+'|'+li.category+'|'+li.price+'|'+noteKey;
+    if (!itemMap.has(key)) itemMap.set(key, { itemName:li.itemName, category:li.category, price:li.price, note:noteKey, qty:0, amount:0 });
+    const rec = itemMap.get(key);
+    rec.qty += Number(li.qty)||0;
+    rec.amount += (Number(li.price)||0)*(Number(li.qty)||0);
+  });
+  const itemStats = Array.from(itemMap.values()).sort((a,b)=> a.itemName.localeCompare(b.itemName,'zh-Hant') || b.amount-a.amount);
+  $('#itemStatsTable tbody').innerHTML = itemStats.length ? itemStats.map(r=>`
+    <tr><td>${esc(r.itemName)}</td><td>${esc(r.category)}</td><td>${r.note?esc(r.note):'—'}</td><td class="num">$${r.price}</td><td class="num">${r.qty}</td><td class="num">$${r.amount.toLocaleString()}</td></tr>
+  `).join('') : `<tr><td colspan="6" class="empty-row">目前還沒有訂單</td></tr>`;
+
+  const personMap = new Map();
+  lineItems.forEach(li=>{
+    const key = (li.dept||'')+'|'+li.name;
+    if (!personMap.has(key)) personMap.set(key, { dept:li.dept||'', name:li.name, qty:0, amount:0 });
+    const rec = personMap.get(key);
+    rec.qty += Number(li.qty)||0;
+    rec.amount += (Number(li.price)||0)*(Number(li.qty)||0);
+  });
+  const personStats = Array.from(personMap.values()).sort((a,b)=> a.dept.localeCompare(b.dept,'zh-Hant') || a.name.localeCompare(b.name,'zh-Hant'));
+  $('#personStatsTable tbody').innerHTML = personStats.length ? personStats.map(r=>`
+    <tr><td>${esc(r.dept)}</td><td>${esc(r.name)}</td><td class="num">${r.qty}</td><td class="num">$${r.amount.toLocaleString()}</td></tr>
+  `).join('') : `<tr><td colspan="4" class="empty-row">目前還沒有訂單</td></tr>`;
+
+  const detailEl = $('#orderDetailList');
+  detailEl.innerHTML = state.orders.length ? state.orders.slice().sort((a,b)=>(b.submittedAt||0)-(a.submittedAt||0)).map(o=>{
+    const total = (o.items||[]).reduce((s,it)=>s+(Number(it.price)||0)*(Number(it.qty)||0),0);
+    return `<div class="order-detail-group">
+      <div class="order-detail-head">
+        <strong>${esc(o.name)}</strong>
+        ${o.dept ? `<span class="stamp stamp-muted" style="font-size:10px; padding:1px 8px;">${esc(o.dept)}</span>` : ''}
+        <span>${formatDateTime(o.submittedAt)}</span>
+        <span class="amount">$${total.toLocaleString()}</span>
+        <button class="btn-text-danger" data-action="delete-order" data-order-id="${o.id}">刪除</button>
+      </div>
+      <table class="data-table sub-table"><tbody>
+        ${(o.items||[]).map(it=>`<tr><td>${esc(it.itemName)}</td><td>${esc(it.category)}</td><td class="num">$${it.price}</td><td class="num">${it.qty}</td><td class="num">$${((Number(it.price)||0)*(Number(it.qty)||0)).toLocaleString()}</td><td>${esc(it.note)}</td></tr>`).join('')}
+      </tbody></table>
+    </div>`;
+  }).join('') : `<p class="empty-row">目前還沒有訂單</p>`;
+}
+
+function renderMenuList(){
+  $('#menuCount').textContent = state.menu.length;
+  const el = $('#menuList');
+  el.innerHTML = state.menu.length ? state.menu.map(m=>`
+    <div class="menu-item-row">
+      <span class="menu-item-name">${esc(m.name)}</span>
+      <span class="menu-item-cat">${m.category ? esc(m.category) : '未填種類'}</span>
+      <span class="menu-item-price">$${m.price}</span>
+      <button class="row-remove" data-action="delete-menu-item" data-item-id="${m.id}" title="刪除">✕</button>
+    </div>
+  `).join('') : `<p class="empty-row">尚未建立菜單，可上傳照片自動辨識，或手動新增</p>`;
+}
+
+function renderSettingsTab(){
+  $('#firebaseUrlInput').value = settings.firebaseUrl;
+  $('#geminiKeyInput').value = settings.geminiKey;
+  $('#geminiModelInput').value = settings.geminiModel;
+  $('#adminPasswordInput').value = settings.adminPassword;
+}
+
+/* ===================== 表單事件代理 ===================== */
+document.addEventListener('input', e=>{
+  const t = e.target;
+  if (t.matches('[data-row-id][data-field]')){
+    const rowId = t.dataset.rowId, field = t.dataset.field;
+    const row = orderRows.find(r=>r.id===rowId);
+    if (!row) return;
+    if (field==='price' || field==='qty'){
+      row[field] = t.value==='' ? '' : Number(t.value);
+      updateRowSubtotal(rowId);
+      updateGrandTotal();
+    } else if (field==='itemName' || field==='category' || field==='note'){
+      row[field] = t.value;
+    }
+    return;
+  }
+  if (t.matches('[data-parsed-idx]')){
+    const idx = Number(t.dataset.parsedIdx);
+    const field = t.dataset.field;
+    if (!parsedMenuStaging[idx]) return;
+    if (field==='include') parsedMenuStaging[idx].include = t.checked;
+    else if (field==='price') parsedMenuStaging[idx].price = Number(t.value)||0;
+    else parsedMenuStaging[idx][field] = t.value;
+  }
+});
+
+document.addEventListener('change', e=>{
+  const t = e.target;
+  if (t.matches('select[data-field="menuSelect"]')){
+    const rowId = t.dataset.rowId;
+    const row = orderRows.find(r=>r.id===rowId);
+    if (!row) return;
+    const menuItem = state.menu.find(m=>m.id===t.value);
+    row.menuId = t.value;
+    if (menuItem){
+      row.itemName = menuItem.name;
+      row.category = menuItem.category;
+      row.price = menuItem.price;
+      const rowEl = document.querySelector(`.order-row[data-row-id="${rowId}"]`);
+      if (rowEl){
+        rowEl.querySelector('[data-field="itemName"]').value = row.itemName;
+        rowEl.querySelector('[data-field="category"]').value = row.category;
+        rowEl.querySelector('[data-field="price"]').value = row.price;
+      }
+      updateRowSubtotal(rowId);
+      updateGrandTotal();
+    }
+    return;
+  }
+  if (t.matches('[data-parsed-idx][data-field="include"]')){
+    const idx = Number(t.dataset.parsedIdx);
+    if (parsedMenuStaging[idx]) parsedMenuStaging[idx].include = t.checked;
+    return;
+  }
+  if (t.id==='menuFileInput') handleMenuFileChange(e);
+  if (t.id==='menuExcelInput') handleMenuExcelChange(e);
+  if (t.id==='importBackupInput') handleImportBackupFile(e);
+});
+
+/* ===================== 動作處理 ===================== */
+function toast(msg, type){
+  const container = $('#toast-container');
+  const el = document.createElement('div');
+  el.className = 'toast' + (type ? ' toast-'+type : '');
+  el.textContent = msg;
+  container.appendChild(el);
+  requestAnimationFrame(()=> el.classList.add('show'));
+  setTimeout(()=>{ el.classList.remove('show'); setTimeout(()=>el.remove(), 300); }, 3000);
+}
+function setBtnLoading(selector, loading){
+  const btn = document.querySelector(selector);
+  if (!btn) return;
+  btn.disabled = loading;
+  if (loading){ btn.dataset.origText = btn.textContent; btn.textContent = '處理中...'; }
+  else if (btn.dataset.origText){ btn.textContent = btn.dataset.origText; }
+}
+
+async function handleSubmitOrder(){
+  const nameInput = $('#orderName');
+  const name = nameInput.value.trim();
+  if (!name){ toast('請填寫姓名', 'error'); nameInput.focus(); return; }
+  const deptInput = $('#orderDept');
+  const dept = deptInput.value;
+  if (!dept){ toast('請選擇單位課室', 'error'); deptInput.focus(); return; }
+  const items = orderRows
+    .map(r => ({ itemName:(r.itemName||'').trim(), category:(r.category||'').trim()||'未分類', price:Number(r.price)||0, qty:Number(r.qty)||0, note:(r.note||'').trim() }))
+    .filter(it => it.itemName && it.qty>0);
+  if (items.length===0){ toast('請至少填寫一項餐點名稱與數量', 'error'); return; }
+  try{
+    setBtnLoading('[data-action="submit-order"]', true);
+    const id = await submitOrderData(name, dept, items);
+    addMyOrderId(id);
+    lsSet('cos_last_name', name);
+    lsSet('cos_last_dept', dept);
+    orderRows = [newRow()];
+    renderOrderRows();
+    toast('🎉 訂單已送出！', 'success');
+    await refreshState(true);
+  }catch(e){
+    toast('送出失敗：' + e.message, 'error');
+  }finally{
+    setBtnLoading('[data-action="submit-order"]', false);
+  }
+}
+
+async function handleDeleteMyOrder(id){
+  if (!confirm('確定要刪除這筆訂單嗎？')) return;
+  try{ await deleteOrderData(id); removeMyOrderId(id); toast('已刪除','success'); await refreshState(true); }
+  catch(e){ toast('刪除失敗：'+e.message,'error'); }
+}
+async function handleDeleteOrder(id){
+  if (!confirm('確定要刪除這筆訂單嗎？')) return;
+  try{ await deleteOrderData(id); toast('已刪除','success'); await refreshState(true); }
+  catch(e){ toast('刪除失敗：'+e.message,'error'); }
+}
+async function handleClearAllOrders(){
+  if (!confirm('確定要清空所有訂單嗎？建議先下載 Excel 備份。此動作無法復原。')) return;
+  try{ await clearAllOrdersData(); toast('已清空訂單','success'); await refreshState(true); }
+  catch(e){ toast('清空失敗：'+e.message,'error'); }
+}
+async function handleSaveMeta(){
+  const meta = {
+    eventTitle: $('#metaEventTitleInput').value.trim(),
+    restaurantName: $('#metaRestaurantInput').value.trim(),
+    deadline: $('#metaDeadlineInput').value
+  };
+  try{ await saveMetaData(meta); toast('已儲存','success'); await refreshState(true); }
+  catch(e){ toast('儲存失敗：'+e.message,'error'); }
+}
+async function handleAddManualMenuItem(){
+  const name = $('#manualItemName').value.trim();
+  const category = $('#manualItemCategory').value.trim() || '未分類';
+  const price = Number($('#manualItemPrice').value) || 0;
+  if (!name){ toast('請輸入品名','error'); return; }
+  const newMenu = state.menu.concat([{ id:genId(), name, category, price }]);
+  try{
+    await saveMenuData(newMenu);
+    $('#manualItemName').value=''; $('#manualItemCategory').value=''; $('#manualItemPrice').value='';
+    toast('已新增品項','success');
+    await refreshState(true);
+  }catch(e){ toast('新增失敗：'+e.message,'error'); }
+}
+async function handleDeleteMenuItem(id){
+  const newMenu = state.menu.filter(m=>m.id!==id);
+  try{ await saveMenuData(newMenu); toast('已刪除品項','success'); await refreshState(true); }
+  catch(e){ toast('刪除失敗：'+e.message,'error'); }
+}
+async function handleClearAllMenu(){
+  if (state.menu.length===0){ toast('目前沒有菜單品項','error'); return; }
+  if (!confirm(`確定要刪除目前全部 ${state.menu.length} 項菜單嗎？此動作無法復原，但不會影響已經送出的訂單記錄。`)) return;
+  try{ await saveMenuData([]); toast('已清空所有菜單品項','success'); await refreshState(true); }
+  catch(e){ toast('清空失敗：'+e.message,'error'); }
+}
+
+function handleMenuFileChange(e){
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    const result = reader.result;
+    const b64 = String(result).split(',')[1];
+    pendingMenuImageBase64 = b64;
+    pendingMenuImageMime = file.type || 'image/jpeg';
+    $('#menuPreview').src = result;
+    $('#menuPreview').style.display = 'block';
+    $('#menuFileName').textContent = file.name;
+    $('#parseMenuBtn').style.display = 'inline-flex';
+  };
+  reader.readAsDataURL(file);
+}
+
+async function callGeminiVision(base64Data, mimeType, apiKey, model){
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+  const prompt = '你是菜單辨識助手。請閱讀這張菜單圖片，將每個可辨識的餐點品項整理成 JSON 陣列，每個元素包含：name(餐點名稱,字串)、price(金額,數字,看不清楚填0)。如果同一個餐點有多種份量或價格（例如大份/小份、大碗/小碗、半份/全份、加大等），請把每一種價格都各自整理成一筆，並在名稱後面加上份量註記（例如「牛肉麵(大碗)」「牛肉麵(小碗)」），不要省略、也不要只保留其中一個價格。不要判斷或填寫種類/分類。只回傳純 JSON 陣列文字，不要加任何說明文字，不要使用 markdown 程式碼框。';
+  const body = { contents:[{ parts:[ { text:prompt }, { inlineData:{ mimeType, data:base64Data } } ] }] };
+  const res = await fetch(url, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body) });
+  if (!res.ok){
+    let errText = '';
+    try{ errText = (await res.json()).error?.message || ''; }catch(e){}
+    throw new Error(`Gemini API 錯誤 (${res.status}) ${errText}`);
+  }
+  const data = await res.json();
+  const text = (data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts || [])
+    .map(p=>p.text||'').join('');
+  const cleaned = text.replace(/```json|```/g, '').trim();
+  let items;
+  try{ items = JSON.parse(cleaned); }
+  catch(e){ throw new Error('AI 回應格式無法解析，請改用手動貼上方式，或重新嘗試一次'); }
+  if (!Array.isArray(items)) throw new Error('AI 回應不是預期的陣列格式');
+  // 種類一律留空白，交給點餐的人自己填寫
+  return items.map(it => ({ name:String(it.name||'').trim(), category:'', price:Number(it.price)||0 })).filter(it=>it.name);
+}
+
+async function handleParseMenuAI(){
+  if (!pendingMenuImageBase64){ toast('請先選擇菜單照片','error'); return; }
+  if (!settings.geminiKey){ toast('請先到「設定」頁籤輸入 Gemini API Key','error'); return; }
+  const statusEl = $('#menuParseStatus');
+  statusEl.textContent = '🤖 AI 辨識中，請稍候...';
+  try{
+    const items = await callGeminiVision(pendingMenuImageBase64, pendingMenuImageMime, settings.geminiKey, settings.geminiModel||'gemini-2.5-flash');
+    if (items.length===0){ statusEl.textContent = '⚠️ 沒有辨識到任何品項，請換一張更清楚的照片，或改用手動貼上'; return; }
+    parsedMenuStaging = items.map(it => ({ ...it, include:true }));
+    statusEl.textContent = `✅ 辨識到 ${items.length} 項，請確認後加入清單`;
+    renderParsedMenuPreview();
+  }catch(e){
+    statusEl.textContent = '❌ 辨識失敗：' + e.message;
+  }
+}
+function renderParsedMenuPreview(){
+  const el = $('#parsedMenuPreview');
+  if (parsedMenuStaging.length===0){ el.innerHTML=''; return; }
+  el.innerHTML = `
+    <div class="parsed-list">
+      ${parsedMenuStaging.map((it,idx)=>`
+        <div class="parsed-row">
+          <input type="checkbox" data-parsed-idx="${idx}" data-field="include" ${it.include?'checked':''}>
+          <input type="text" data-parsed-idx="${idx}" data-field="name" value="${esc(it.name)}">
+          <input type="text" data-parsed-idx="${idx}" data-field="category" value="${esc(it.category)}">
+          <input type="number" data-parsed-idx="${idx}" data-field="price" value="${it.price}">
+        </div>
+      `).join('')}
+    </div>
+    <button class="btn btn-primary" data-action="confirm-add-parsed" type="button">✅ 加入菜單清單</button>
+  `;
+}
+async function handleConfirmAddParsed(){
+  const toAdd = parsedMenuStaging
+    .filter(it => it.include && it.name && it.name.trim())
+    .map(it => ({ id:genId(), name:it.name.trim(), category:(it.category||'').trim(), price:Number(it.price)||0 }));
+  if (toAdd.length===0){ toast('沒有勾選任何品項','error'); return; }
+  const newMenu = state.menu.concat(toAdd);
+  try{
+    await saveMenuData(newMenu);
+    parsedMenuStaging = [];
+    $('#parsedMenuPreview').innerHTML = '';
+    $('#menuParseStatus').textContent = '';
+    $('#menuPreview').style.display = 'none';
+    $('#parseMenuBtn').style.display = 'none';
+    $('#menuFileName').textContent = '';
+    pendingMenuImageBase64 = null;
+    toast(`已加入 ${toAdd.length} 項到菜單`,'success');
+    await refreshState(true);
+  }catch(e){ toast('加入失敗：'+e.message,'error'); }
+}
+async function handleParsePastedMenu(){
+  const raw = $('#menuPasteArea').value;
+  const lines = raw.split('\n').map(l=>l.trim()).filter(Boolean);
+  const items = lines.map(line=>{
+    const parts = line.split(',').map(p=>p.trim());
+    return { id:genId(), name:parts[0]||'', category:parts[1]||'未分類', price:Number(parts[2])||0 };
+  }).filter(it=>it.name);
+  if (items.length===0){ toast('沒有解析到任何品項，請確認格式','error'); return; }
+  const newMenu = state.menu.concat(items);
+  try{
+    await saveMenuData(newMenu);
+    $('#menuPasteArea').value = '';
+    toast(`已加入 ${items.length} 項到菜單`,'success');
+    await refreshState(true);
+  }catch(e){ toast('加入失敗：'+e.message,'error'); }
+}
+
+function handleMenuExcelChange(e){
+  const file = e.target.files[0];
+  if (!file) return;
+  if (typeof XLSX==='undefined'){ toast('Excel 讀取元件載入失敗，請檢查網路連線','error'); e.target.value=''; return; }
+  const reader = new FileReader();
+  reader.onload = async () => {
+    try{
+      const data = new Uint8Array(reader.result);
+      const wb = XLSX.read(data, { type:'array' });
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const rows = XLSX.utils.sheet_to_json(ws, { header:1, defval:'' });
+      let dataRows = rows;
+      if (rows.length>0){
+        const firstPriceCell = rows[0][2];
+        const looksLikeHeader = firstPriceCell==='' || firstPriceCell===undefined || isNaN(Number(firstPriceCell));
+        if (looksLikeHeader) dataRows = rows.slice(1);
+      }
+      const items = dataRows
+        .map(row => ({ id:genId(), name:String(row[0]||'').trim(), category:String(row[1]||'').trim(), price:Number(row[2])||0 }))
+        .filter(it => it.name);
+      if (items.length===0){ toast('Excel 沒有解析到任何品項，請確認格式：A欄=品名、B欄=種類、C欄=金額','error'); return; }
+      const newMenu = state.menu.concat(items);
+      await saveMenuData(newMenu);
+      toast(`已從 Excel 匯入 ${items.length} 項到菜單`,'success');
+      await refreshState(true);
+    }catch(err){
+      toast('Excel 匯入失敗：'+err.message,'error');
+    }finally{
+      e.target.value = '';
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function exportToExcel(){
+  if (typeof XLSX==='undefined'){ toast('Excel 匯出元件載入失敗，請檢查網路連線','error'); return; }
+  const lineItems = [];
+  state.orders.forEach(o => (o.items||[]).forEach(it => {
+    lineItems.push({
+      '課室': o.dept || '',
+      '姓名': o.name,
+      '餐點名稱': it.itemName,
+      '種類': it.category,
+      '單價': it.price,
+      '數量': it.qty,
+      '小計': (Number(it.price)||0)*(Number(it.qty)||0),
+      '備註': it.note || '',
+      '送出時間': o.submittedAt ? new Date(o.submittedAt).toLocaleString('zh-TW') : ''
+    });
+  }));
+  if (lineItems.length===0){ toast('目前還沒有訂單可以匯出','error'); return; }
+
+  const itemMap = new Map();
+  lineItems.forEach(li=>{
+    const noteKey = (li['備註']||'').trim();
+    const key = li['餐點名稱']+'|'+li['種類']+'|'+li['單價']+'|'+noteKey;
+    if (!itemMap.has(key)) itemMap.set(key, { '餐點名稱':li['餐點名稱'], '種類':li['種類'], '備註':noteKey, '單價':li['單價'], '數量':0, '小計':0 });
+    const rec = itemMap.get(key);
+    rec['數量'] += li['數量'];
+    rec['小計'] += li['小計'];
+  });
+  const itemStats = Array.from(itemMap.values()).sort((a,b)=> a['餐點名稱'].localeCompare(b['餐點名稱'],'zh-Hant') || b['小計']-a['小計']);
+
+  const personMap = new Map();
+  lineItems.forEach(li=>{
+    const key = (li['課室']||'')+'|'+li['姓名'];
+    if (!personMap.has(key)) personMap.set(key, { '課室':li['課室']||'', '姓名':li['姓名'], '品項數':0, '應付金額':0 });
+    const rec = personMap.get(key);
+    rec['品項數'] += li['數量'];
+    rec['應付金額'] += li['小計'];
+  });
+  const personStats = Array.from(personMap.values()).sort((a,b)=> a['課室'].localeCompare(b['課室'],'zh-Hant') || a['姓名'].localeCompare(b['姓名'],'zh-Hant'));
+
+  const personTotalLookup = new Map();
+  personStats.forEach(p => personTotalLookup.set(p['課室']+'|'+p['姓名'], p['應付金額']));
+
+  const personDetailRows = lineItems
+    .slice()
+    .sort((a,b)=> (a['課室']||'').localeCompare(b['課室']||'','zh-Hant') || a['姓名'].localeCompare(b['姓名'],'zh-Hant'))
+    .map(li => ({
+      '課室': li['課室']||'',
+      '姓名': li['姓名'],
+      '餐點名稱': li['餐點名稱'],
+      '種類': li['種類'],
+      '單價': li['單價'],
+      '數量': li['數量'],
+      '小計': li['小計'],
+      '備註': li['備註'],
+      '該員應付總額': personTotalLookup.get((li['課室']||'')+'|'+li['姓名']) || 0
+    }));
+
+  const wb = XLSX.utils.book_new();
+
+  const wsItem = XLSX.utils.json_to_sheet(itemStats);
+  addAutoFilter(wsItem, itemStats.length, 6);
+  addTotalRow(wsItem, itemStats, 6, [{col:4,key:'數量'},{col:5,key:'小計'}], '總計');
+  XLSX.utils.book_append_sheet(wb, wsItem, '餐點統計(給店家)');
+
+  const wsPerson = XLSX.utils.json_to_sheet(personStats);
+  addAutoFilter(wsPerson, personStats.length, 4);
+  addTotalRow(wsPerson, personStats, 4, [{col:2,key:'品項數'},{col:3,key:'應付金額'}], '總計');
+  XLSX.utils.book_append_sheet(wb, wsPerson, '個人應付金額(收錢用)');
+
+  const wsPersonDetail = XLSX.utils.json_to_sheet(personDetailRows);
+  addAutoFilter(wsPersonDetail, personDetailRows.length, 9);
+  addTotalRow(wsPersonDetail, personDetailRows, 9, [{col:5,key:'數量'},{col:6,key:'小計'}], '總計');
+  XLSX.utils.book_append_sheet(wb, wsPersonDetail, '個人訂購明細(發放用)');
+
+  const wsLineItems = XLSX.utils.json_to_sheet(lineItems);
+  addAutoFilter(wsLineItems, lineItems.length, 9);
+  addTotalRow(wsLineItems, lineItems, 9, [{col:5,key:'數量'},{col:6,key:'小計'}], '總計');
+  XLSX.utils.book_append_sheet(wb, wsLineItems, '訂單明細');
+
+  const dateStr = new Date().toISOString().slice(0,10);
+  const titleRaw = state.meta.restaurantName || state.meta.eventTitle || '公司訂餐';
+  const title = titleRaw.replace(/[\\/:*?"<>|]/g,'');
+  XLSX.writeFile(wb, `${title}_${dateStr}.xlsx`);
+}
+function addAutoFilter(ws, rowCount, colCount){
+  if (!ws || rowCount<=0 || colCount<=0) return;
+  try { ws['!autofilter'] = { ref: XLSX.utils.encode_range({ s:{r:0,c:0}, e:{r:rowCount, c:colCount-1} }) }; }
+  catch(e){}
+}
+/* 在資料表最下面加一列「總計」，數字欄位用真正的 Excel SUM 公式（不是寫死的數字），
+   這樣如果之後在 Excel 裡手動調整資料，總計也會自動跟著重新計算。
+   同時也附上目前算好的數值當快取，確保在不會自動重算公式的檢視器中也能馬上看到正確總計。
+   data = 該分頁的資料陣列；colCount = 總欄數；sumSpecs = [{col:0-indexed欄位, key:資料物件裡的欄位名稱}] */
+function addTotalRow(ws, data, colCount, sumSpecs, label){
+  if (!ws || !data || data.length===0) return;
+  try{
+    const rowCount = data.length;
+    const totalRowIdx = rowCount + 1; // 0-indexed：第0列是標題，第1~rowCount列是資料，總計列在rowCount+1
+    const labelRef = XLSX.utils.encode_cell({ r:totalRowIdx, c:0 });
+    ws[labelRef] = { t:'s', v: label||'總計' };
+    sumSpecs.forEach(({col, key}) => {
+      const sum = data.reduce((s,row)=> s + (Number(row[key])||0), 0);
+      const colLetter = XLSX.utils.encode_col(col);
+      const firstDataExcelRow = 2; // Excel是1-indexed，標題在第1列，資料從第2列開始
+      const lastDataExcelRow = rowCount + 1;
+      const ref = XLSX.utils.encode_cell({ r:totalRowIdx, c:col });
+      ws[ref] = { t:'n', v: sum, f:`SUM(${colLetter}${firstDataExcelRow}:${colLetter}${lastDataExcelRow})` };
+    });
+    const range = XLSX.utils.decode_range(ws['!ref']);
+    range.e.r = Math.max(range.e.r, totalRowIdx);
+    range.e.c = Math.max(range.e.c, colCount-1);
+    ws['!ref'] = XLSX.utils.encode_range(range);
+  }catch(e){}
+}
+
+function handleExportBackup(){
+  const backup = { exportedAt:new Date().toISOString(), data:state };
+  const blob = new Blob([JSON.stringify(backup,null,2)], { type:'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = `公司訂餐備份_${new Date().toISOString().slice(0,10)}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+function handleImportBackupFile(e){
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = async () => {
+    try{
+      const parsed = JSON.parse(reader.result);
+      const data = parsed.data || parsed;
+      if (!confirm('匯入備份將會覆蓋目前的訂單與菜單資料，確定要繼續嗎？')) return;
+      if (isFirebaseConfigured()){
+        await fbPut('meta', data.meta || {});
+        const menuObj = {};
+        (data.menu||[]).forEach(m => { menuObj[m.id||genId()] = { name:m.name, category:m.category, price:m.price }; });
+        await fbPut('menu', menuObj);
+        const orderObj = {};
+        (data.orders||[]).forEach(o => { orderObj[o.id||genId()] = { name:o.name, dept:o.dept||'', items:o.items, submittedAt:o.submittedAt }; });
+        await fbPut('orders', orderObj);
+      } else {
+        saveLocalData({ meta:data.meta||{}, menu:data.menu||[], orders:data.orders||[] });
+      }
+      toast('匯入完成','success');
+      await refreshState(true);
+    }catch(err){ toast('匯入失敗：檔案格式錯誤','error'); }
+  };
+  reader.readAsText(file);
+}
+function handleClearLocalData(){
+  if (!confirm('確定要清空本機資料嗎？（不影響 Firebase 上的資料）')) return;
+  lsRemove(LS_KEYS.data);
+  lsRemove(LS_KEYS.myOrders);
+  toast('已清空本機資料','success');
+  refreshState(true);
+}
+async function handleSaveSettings(){
+  settings.firebaseUrl = $('#firebaseUrlInput').value.trim();
+  settings.geminiKey = $('#geminiKeyInput').value.trim();
+  settings.geminiModel = $('#geminiModelInput').value.trim() || 'gemini-2.5-flash';
+  settings.adminPassword = $('#adminPasswordInput').value;
+  saveSettingsToLS();
+  toast('設定已儲存','success');
+  await refreshState(true);
+  setupPolling();
+}
+
+/* ===================== 管理密碼 / 頁籤切換 ===================== */
+function ensureAdminAccess(){
+  if (!settings.adminPassword) return true;
+  if (ssGet('cos_admin_unlocked')==='1') return true;
+  const input = prompt('請輸入管理密碼：');
+  if (input===null) return false;
+  if (input===settings.adminPassword){ ssSet('cos_admin_unlocked','1'); return true; }
+  alert('密碼錯誤');
+  return false;
+}
+function switchTab(tab){
+  if (tab==='admin' || tab==='settings'){
+    if (!isAdminMode) return;
+    if (!ensureAdminAccess()) return;
+  }
+  activeTab = tab;
+  $$('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab===tab));
+  $$('.panel').forEach(p => p.classList.toggle('active', p.id==='panel-'+tab));
+}
+
+/* ===================== 點擊事件代理 ===================== */
+document.addEventListener('click', e=>{
+  const btn = e.target.closest('[data-action]');
+  if (!btn) return;
+  const action = btn.dataset.action;
+  switch(action){
+    case 'switch-tab': switchTab(btn.dataset.tab); break;
+    case 'add-row': addRow(); break;
+    case 'remove-row': removeRow(btn.dataset.rowId); break;
+    case 'submit-order': handleSubmitOrder(); break;
+    case 'delete-my-order': handleDeleteMyOrder(btn.dataset.orderId); break;
+    case 'save-meta': handleSaveMeta(); break;
+    case 'trigger-menu-upload': $('#menuFileInput').click(); break;
+    case 'parse-menu-ai': handleParseMenuAI(); break;
+    case 'parse-pasted-menu': handleParsePastedMenu(); break;
+    case 'confirm-add-parsed': handleConfirmAddParsed(); break;
+    case 'add-manual-menu-item': handleAddManualMenuItem(); break;
+    case 'delete-menu-item': handleDeleteMenuItem(btn.dataset.itemId); break;
+    case 'trigger-menu-excel': $('#menuExcelInput').click(); break;
+    case 'clear-all-menu': handleClearAllMenu(); break;
+    case 'export-excel': exportToExcel(); break;
+    case 'clear-all-orders': handleClearAllOrders(); break;
+    case 'delete-order': handleDeleteOrder(btn.dataset.orderId); break;
+    case 'manual-refresh': refreshState(true); toast('已重新整理','success'); break;
+    case 'save-settings': handleSaveSettings(); break;
+    case 'export-backup': handleExportBackup(); break;
+    case 'trigger-import-backup': $('#importBackupInput').click(); break;
+    case 'clear-local-data': handleClearLocalData(); break;
+    case 'exit-admin-mode': handleExitAdminMode(); break;
+  }
+});
+
+/* ===================== 管理模式解鎖手勢（連點標題5下） ===================== */
+function setupAdminGesture(){
+  const titleEl = document.getElementById('appTitle');
+  if (!titleEl) return;
+  let taps = [];
+  titleEl.style.cursor = 'pointer';
+  titleEl.addEventListener('click', () => {
+    const now = Date.now();
+    taps.push(now);
+    taps = taps.filter(t => now - t < 3000);
+    if (taps.length >= 5){
+      taps = [];
+      tryUnlockAdmin();
+    }
+  });
+}
+function tryUnlockAdmin(){
+  if (isAdminMode){ toast('這支裝置已經是管理模式了', 'success'); return; }
+  if (settings.adminPassword){
+    const input = prompt('請輸入管理密碼以切換到管理模式：');
+    if (input === null) return;
+    if (input !== settings.adminPassword){ alert('密碼錯誤'); return; }
+    ssSet('cos_admin_unlocked', '1');
+  } else {
+    if (!confirm('要切換成管理模式嗎？\n切換後可以看到「管理後台」與「設定」頁籤。\n建議切換後立刻到設定頁設定管理密碼，避免別人也用同樣方式連點解鎖。')) return;
+  }
+  lsSet('cos_device_admin', '1');
+  let persisted = false;
+  try { persisted = (localStorage.getItem('cos_device_admin') === '1'); } catch(e){ persisted = false; }
+  if (persisted){
+    location.reload();
+  } else {
+    // 這個瀏覽器/開啟方式無法記住設定（常見於用 content:// 開啟本機檔案時），
+    // 改成只解鎖這次畫面，不重新整理（重新整理也記不住，等於白做工）
+    isAdminMode = true;
+    const nav = document.querySelector('.tabs');
+    if (nav) nav.style.display = '';
+    renderAll();
+    toast('已解鎖管理模式（這次開啟無法記住設定，下次打開需要再連點5下）', 'success');
+  }
+}
+function handleExitAdminMode(){
+  if (!confirm('確定要退出管理模式嗎？\n這支裝置之後就只會看到點餐畫面，需要再連點標題5下才能恢復。')) return;
+  lsRemove('cos_device_admin');
+  ssRemove('cos_admin_unlocked');
+  isAdminMode = false;
+  location.reload();
+}
+
+/* ===================== 初始化 ===================== */
+function init(){
+  settings = loadSettings();
+  orderRows = [newRow()];
+  const lastName = lsGet('cos_last_name');
+  const lastDept = lsGet('cos_last_dept');
+  setupAdminGesture();
+  if (!isAdminMode){
+    const nav = document.querySelector('.tabs');
+    if (nav) nav.style.display = 'none';
+  }
+  refreshState(true).then(()=>{
+    if (lastName){ const el = $('#orderName'); if (el) el.value = lastName; }
+    if (lastDept){ const el = $('#orderDept'); if (el) el.value = lastDept; }
+    setupPolling();
+  });
+}
+init();
+</script>
+</body>
+</html>
